@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tidyrent.netlify.app/sitemap.xml
