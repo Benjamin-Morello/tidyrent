@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TidyRent — Your rental, tidy</title>
+<meta name="description" content="The private, no-account rent ledger for everyday Australian landlords. Rent, expenses, receipts, key dates and an EOFY report — all on your device.">
+<meta name="theme-color" content="#21303F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="TidyRent">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2321303F'/%3E%3Ctext x='50' y='63' font-family='Arial,sans-serif' font-size='38' font-weight='800' fill='%23F2C94C' text-anchor='middle'%3ETR%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2321303F'/%3E%3Ctext x='50' y='63' font-family='Arial,sans-serif' font-size='38' font-weight='800' fill='%23F2C94C' text-anchor='middle'%3ETR%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#21303F; --paper:#F7F5EF; --card:#FFFFFF; --green:#2F7A57; --green-dark:#22593F;
+  --stamp:#B33A3A; --line:#D8D3C4; --mark:#F2C94C; --muted:#5D6B79; --late-bg:#FBF1EF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
+body{background:var(--paper);color:var(--ink);font-family:'Source Sans 3',system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:84px;}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px;}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-0.02em;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+.topbar{background:var(--ink);color:var(--paper);padding:14px 0;position:sticky;top:0;z-index:20;}
+.topbar .wrap{display:flex;justify-content:space-between;align-items:center;}
+.wordmark{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.2rem;}
+.wordmark span{color:var(--mark);}
+.top-tag{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9AA7B4;}
+
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1.5px solid var(--ink);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom);}
+.nav button{flex:1;padding:12px 4px 10px;background:none;border:none;font-family:'Source Sans 3',sans-serif;font-size:0.72rem;font-weight:600;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.nav button .ic{font-size:1.15rem;line-height:1;}
+.nav button.active{color:var(--green-dark);}
+.nav button:focus-visible{outline:3px solid var(--mark);outline-offset:-3px;}
+
+.screen{display:none;padding:20px 0 30px;}
+.screen.active{display:block;}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:16px;margin-top:14px;}
+.card.strong{border-color:var(--ink);box-shadow:4px 4px 0 rgba(33,48,63,0.10);}
+.btn{display:inline-block;padding:12px 18px;font-family:'Source Sans 3',sans-serif;font-weight:600;font-size:0.95rem;background:var(--green);color:#fff;border:1.5px solid var(--green-dark);border-radius:8px;cursor:pointer;text-align:center;}
+.btn:hover{background:var(--green-dark);}
+.btn:focus-visible{outline:3px solid var(--mark);outline-offset:2px;}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink);}
+.btn.small{padding:8px 12px;font-size:0.85rem;}
+.btn.danger{background:transparent;color:var(--stamp);border-color:var(--stamp);}
+.btn.block{display:block;width:100%;}
+.row{display:flex;gap:10px;flex-wrap:wrap;}
+.row .btn{flex:1;}
+label{display:block;font-weight:600;font-size:0.85rem;margin:12px 0 5px;}
+input,select,textarea{width:100%;padding:11px 12px;font:inherit;border:1.5px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink);}
+input:focus,select:focus,textarea:focus{outline:3px solid var(--mark);outline-offset:1px;}
+.hint{font-size:0.8rem;color:var(--muted);margin-top:5px;}
+.empty{text-align:center;padding:36px 16px;color:var(--muted);}
+.empty h2{color:var(--ink);font-size:1.3rem;margin-bottom:8px;}
+.chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em;padding:3px 8px;border-radius:4px;border:1.5px solid;}
+.chip.ok{color:var(--green-dark);border-color:var(--green);}
+.chip.due{color:#8a6d00;border-color:var(--mark);background:#FDF6DC;}
+.chip.late{color:var(--stamp);border-color:var(--stamp);background:var(--late-bg);transform:rotate(-2deg);}
+.chip.date{color:var(--muted);border-color:var(--line);}
+
+.prop-card{cursor:pointer;}
+.prop-card h3{font-size:1.1rem;font-weight:600;}
+.prop-card .meta{font-size:0.85rem;color:var(--muted);margin-top:2px;}
+.prop-card .chips{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;}
+
+.ledger{border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:var(--card);margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;}
+.ledger-head{display:flex;justify-content:space-between;padding:10px 14px;background:var(--ink);color:var(--paper);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;}
+.ledger-head .dot{color:var(--mark);}
+.lrow{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;border-top:1px dashed var(--line);align-items:center;cursor:pointer;}
+.lrow:first-of-type{border-top:none;}
+.lrow .d{color:var(--muted);flex:0 0 58px;}
+.lrow .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lrow .a{font-weight:500;white-space:nowrap;}
+.lrow .a.in{color:var(--green);}
+.lrow.late{background:var(--late-bg);}
+.lrow .pic{width:26px;height:26px;border-radius:4px;object-fit:cover;border:1px solid var(--line);flex:0 0 26px;}
+.ledger-more{display:block;width:100%;padding:10px;background:none;border:none;border-top:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--green-dark);cursor:pointer;}
+.ledger-foot{display:flex;justify-content:space-between;padding:10px 14px;border-top:1.5px solid var(--ink);font-size:0.7rem;color:var(--muted);}
+.ledger-foot b{color:var(--ink);}
+
+.detail-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-top:6px;}
+.back{background:none;border:none;font:inherit;font-weight:600;color:var(--green-dark);cursor:pointer;padding:6px 0;}
+.rent-status{margin-top:12px;padding:14px 16px;border-radius:10px;border:1.5px solid var(--ink);background:var(--card);display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.rent-status .big{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.25rem;}
+.rent-status .sub{font-size:0.8rem;color:var(--muted);}
+.rent-status.late{background:var(--late-bg);border-color:var(--stamp);}
+
+.tenant-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;font-size:0.9rem;}
+.tenant-grid .tg-item .k{font-family:'IBM Plex Mono',monospace;font-size:0.64rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+.tenant-grid .tg-item .v{font-weight:600;}
+.tenant-grid .tg-item .v a{color:var(--green-dark);text-decoration:none;}
+
+.date-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px dashed var(--line);}
+.date-item:first-child{border-top:none;}
+.date-item .lbl{font-weight:600;}
+.date-item .whn{font-size:0.82rem;color:var(--muted);}
+.date-item.overdue .whn{color:var(--stamp);font-weight:600;}
+.xdel{background:none;border:none;color:var(--line);cursor:pointer;font-size:0.9rem;padding:2px 6px;}
+.xdel:hover{color:var(--stamp);}
+
+.rep-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;}
+.rep-box{background:var(--card);border:1.5px solid var(--ink);border-radius:10px;padding:12px;}
+.rep-box .n{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.15rem;}
+.rep-box .l{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-family:'IBM Plex Mono',monospace;}
+.rep-box.net .n{color:var(--green-dark);}
+.cat-row{display:flex;justify-content:space-between;padding:9px 0;border-top:1px dashed var(--line);font-size:0.92rem;}
+.cat-row:first-child{border-top:none;}
+.cat-row .a{font-family:'IBM Plex Mono',monospace;}
+.meter{height:8px;background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:8px;}
+.meter div{height:100%;background:var(--green);}
+.meter.warn div{background:var(--stamp);}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(33,48,63,0.5);z-index:40;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--paper);border-radius:14px 14px 0 0;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;padding:20px 18px calc(24px + env(safe-area-inset-bottom));}
+.modal h2{font-size:1.2rem;margin-bottom:4px;}
+.modal .close-x{float:right;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);padding:4px 8px;}
+.photo-preview{max-width:120px;border-radius:8px;border:1.5px solid var(--line);margin-top:8px;display:none;}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:8px;font-size:0.88rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;}
+.founding{margin-top:16px;background:var(--ink);color:var(--paper);border-radius:10px;padding:16px;}
+.founding b{color:var(--mark);}
+.founding p{font-size:0.88rem;}
+.img-view{display:none;position:fixed;inset:0;background:rgba(33,48,63,0.9);z-index:70;align-items:center;justify-content:center;padding:20px;}
+.img-view.open{display:flex;}
+.img-view img{max-width:100%;max-height:85vh;border-radius:10px;}
+.seg{display:flex;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden;margin-top:6px;}
+.seg button{flex:1;padding:10px;background:var(--card);border:none;font:inherit;font-weight:600;font-size:0.88rem;color:var(--muted);cursor:pointer;}
+.seg button.on{background:var(--ink);color:var(--paper);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="wordmark">Tidy<span>Rent</span></div>
+    <div class="top-tag">On-device · Private</div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- HOME -->
+  <section class="screen active" id="scr-home">
+    <div id="home-list"></div>
+    <div class="empty" id="home-empty" style="display:none;">
+      <h2>Your rental, tidy.</h2>
+      <p>No account. No signup. Nothing uploaded anywhere — your records live on this device only.</p>
+      <p style="margin-top:8px;">Add your property and you're tracking in under a minute.</p>
+      <button class="btn" style="margin-top:16px;" onclick="openPropModal()">Add your property</button>
+    </div>
+    <button class="btn ghost block" id="add-prop-btn" style="margin-top:16px;display:none;" onclick="openPropModal()">+ Add another property</button>
+    <div class="founding" id="founding-box">
+      <p><b>Founding members: $6/month, locked forever.</b> Cloud backup across devices, bank-feed rent matching and the accountant pack are coming. First 100 keep half price for life.</p>
+      <button class="btn small" style="margin-top:10px;background:var(--mark);color:var(--ink);border-color:var(--mark);" onclick="joinList()">Join the founding list</button>
+    </div>
+  </section>
+
+  <!-- PROPERTY DETAIL -->
+  <section class="screen" id="scr-prop">
+    <button class="back" onclick="showScreen('home')">‹ All properties</button>
+    <div class="detail-top">
+      <div><h2 id="p-name" style="font-size:1.35rem;"></h2><div class="hint" id="p-sub"></div></div>
+      <button class="btn small ghost" onclick="openPropModal(currentPropId)">Edit</button>
+    </div>
+    <div class="rent-status" id="rent-status"></div>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn" onclick="openRentModal()">Rent received ✓</button>
+      <button class="btn ghost" onclick="openEntryModal()">+ Expense / income</button>
+    </div>
+    <div class="ledger" id="ledger"></div>
+
+    <div class="card" id="tenant-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:1rem;">Tenant &amp; lease</h3>
+        <button class="btn small ghost" onclick="openTenantModal()">Edit</button>
+      </div>
+      <div id="tenant-body"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:1rem;">Key dates</h3>
+        <button class="btn small ghost" onclick="openDateModal()">+ Add</button>
+      </div>
+      <div id="date-list"></div>
+    </div>
+    <button class="btn danger block" style="margin-top:14px;" onclick="deleteProp()">Delete this property</button>
+  </section>
+
+  <!-- DATES -->
+  <section class="screen" id="scr-dates">
+    <h2 style="font-size:1.35rem;margin-top:6px;">Coming up</h2>
+    <p class="hint">Every rent due date and key date across all properties, soonest first.</p>
+    <div class="card" id="all-dates"></div>
+  </section>
+
+  <!-- REPORT -->
+  <section class="screen" id="scr-report">
+    <h2 style="font-size:1.35rem;margin-top:6px;">Tax time, sorted</h2>
+    <label for="fy-select">Financial year</label>
+    <select id="fy-select" onchange="renderReport()"></select>
+    <div class="rep-grid">
+      <div class="rep-box"><div class="n" id="rep-in">$0</div><div class="l">Income</div></div>
+      <div class="rep-box"><div class="n" id="rep-out">$0</div><div class="l">Expenses</div></div>
+      <div class="rep-box net"><div class="n" id="rep-net">$0</div><div class="l">Net</div></div>
+    </div>
+    <div class="card strong">
+      <h3 style="font-size:1rem;margin-bottom:8px;">Expenses by category</h3>
+      <div id="rep-cats"></div>
+    </div>
+    <button class="btn block" style="margin-top:14px;" onclick="exportCSV()">Download CSV for your accountant</button>
+    <div class="card">
+      <h3 style="font-size:1rem;">Backup &amp; data</h3>
+      <p class="hint">Your data lives only in this browser. Back it up occasionally — clearing browser data would erase it.</p>
+      <div id="storage-meter"></div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn small ghost" onclick="backupJSON()">Download backup</button>
+        <button class="btn small ghost" onclick="document.getElementById('restore-file').click()">Restore backup</button>
+      </div>
+      <input type="file" id="restore-file" accept=".json" style="display:none;" onchange="restoreJSON(event)">
+      <button class="btn small danger block" style="margin-top:10px;" onclick="wipeAll()">Delete everything</button>
+    </div>
+    <div class="card">
+      <h3 style="font-size:1rem;">Put TidyRent on your home screen</h3>
+      <p class="hint">iPhone: Share button → "Add to Home Screen". Android: browser menu → "Add to Home screen". It'll open full-screen like a normal app.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="nav" aria-label="Main">
+  <button id="nav-home" class="active" onclick="showScreen('home')"><span class="ic">⌂</span>Properties</button>
+  <button id="nav-dates" onclick="showScreen('dates')"><span class="ic">⏰</span>Dates</button>
+  <button id="nav-report" onclick="showScreen('report')"><span class="ic">☰</span>Report</button>
+</nav>
+
+<!-- PROPERTY MODAL -->
+<div class="modal-bg" id="m-prop" onclick="if(event.target===this)closeModal('m-prop')">
+  <div class="modal" role="dialog" aria-label="Property details">
+    <button class="close-x" onclick="closeModal('m-prop')">✕</button>
+    <h2 id="m-prop-title">Add property</h2>
+    <label for="f-name">Nickname / address</label>
+    <input id="f-name" placeholder="12 Acacia St — Unit 2">
+    <label for="f-amount">Rent amount ($)</label>
+    <input id="f-amount" type="number" inputmode="decimal" placeholder="620">
+    <label for="f-freq">Frequency</label>
+    <select id="f-freq">
+      <option value="7">Weekly</option>
+      <option value="14">Fortnightly</option>
+      <option value="30">Monthly</option>
+    </select>
+    <label for="f-due">Next rent due</label>
+    <input id="f-due" type="date">
+    <button class="btn block" style="margin-top:18px;" onclick="saveProp()">Save property</button>
+  </div>
+</div>
+
+<!-- RENT MODAL -->
+<div class="modal-bg" id="m-rent" onclick="if(event.target===this)closeModal('m-rent')">
+  <div class="modal" role="dialog" aria-label="Log rent">
+    <button class="close-x" onclick="closeModal('m-rent')">✕</button>
+    <h2>Rent received</h2>
+    <label for="r-amount">Amount ($)</label>
+    <input id="r-amount" type="number" inputmode="decimal">
+    <p class="hint" id="r-expected"></p>
+    <label for="r-date">Date received</label>
+    <input id="r-date" type="date">
+    <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-top:14px;">
+      <input type="checkbox" id="r-roll" checked style="width:auto;"> Roll the next due date forward
+    </label>
+    <p class="hint">Untick for a partial or catch-up payment that doesn't cover the period.</p>
+    <button class="btn block" style="margin-top:18px;" onclick="saveRent()">Log rent</button>
+  </div>
+</div>
+
+<!-- ENTRY MODAL (expense / other income / edit) -->
+<div class="modal-bg" id="m-entry" onclick="if(event.target===this)closeModal('m-entry')">
+  <div class="modal" role="dialog" aria-label="Add or edit entry">
+    <button class="close-x" onclick="closeModal('m-entry')">✕</button>
+    <h2 id="m-entry-title">Add entry</h2>
+    <div class="seg" id="e-typeseg">
+      <button id="seg-exp" class="on" onclick="setEntryType('expense')">Expense</button>
+      <button id="seg-inc" onclick="setEntryType('income')">Other income</button>
+    </div>
+    <p class="hint" id="e-typehint">e.g. repairs, rates, insurance</p>
+    <label for="e-desc">Description</label>
+    <input id="e-desc" placeholder="Plumber — hot water service">
+    <label for="e-amount">Amount ($)</label>
+    <input id="e-amount" type="number" inputmode="decimal" placeholder="285">
+    <div id="e-cat-wrap">
+      <label for="e-cat">Category</label>
+      <select id="e-cat">
+        <option>Repairs &amp; maintenance</option>
+        <option>Insurance</option>
+        <option>Council &amp; water rates</option>
+        <option>Strata / body corporate</option>
+        <option>Interest on loan</option>
+        <option>Agent fees</option>
+        <option>Land tax</option>
+        <option>Gardening &amp; cleaning</option>
+        <option>Advertising</option>
+        <option>Depreciation report</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <label for="e-date">Date</label>
+    <input id="e-date" type="date">
+    <div id="e-photo-wrap">
+      <label for="e-photo">Receipt photo (optional)</label>
+      <input id="e-photo" type="file" accept="image/*" capture="environment" onchange="previewPhoto(event)">
+      <img class="photo-preview" id="e-preview" alt="Receipt preview">
+    </div>
+    <button class="btn block" style="margin-top:18px;" onclick="saveEntry()">Save</button>
+    <button class="btn danger block" id="e-delete" style="margin-top:10px;display:none;" onclick="deleteEditingEntry()">Delete entry</button>
+  </div>
+</div>
+
+<!-- TENANT MODAL -->
+<div class="modal-bg" id="m-tenant" onclick="if(event.target===this)closeModal('m-tenant')">
+  <div class="modal" role="dialog" aria-label="Tenant and lease">
+    <button class="close-x" onclick="closeModal('m-tenant')">✕</button>
+    <h2>Tenant &amp; lease</h2>
+    <label for="t-name">Tenant name</label>
+    <input id="t-name" placeholder="Sam & Jess Nguyen">
+    <label for="t-phone">Phone</label>
+    <input id="t-phone" type="tel" inputmode="tel" placeholder="0400 000 000">
+    <label for="t-lease-end">Lease end date</label>
+    <input id="t-lease-end" type="date">
+    <p class="hint">This will show automatically in your key dates.</p>
+    <label for="t-bond">Bond held ($)</label>
+    <input id="t-bond" type="number" inputmode="decimal" placeholder="2480">
+    <button class="btn block" style="margin-top:18px;" onclick="saveTenant()">Save</button>
+  </div>
+</div>
+
+<!-- DATE MODAL -->
+<div class="modal-bg" id="m-date" onclick="if(event.target===this)closeModal('m-date')">
+  <div class="modal" role="dialog" aria-label="Add key date">
+    <button class="close-x" onclick="closeModal('m-date')">✕</button>
+    <h2>Add key date</h2>
+    <label for="d-label-preset">What is it?</label>
+    <select id="d-label-preset" onchange="document.getElementById('d-label').value=this.value==='Custom'?'':this.value">
+      <option>Routine inspection</option>
+      <option>Landlord insurance renewal</option>
+      <option>Smoke alarm check</option>
+      <option>Rent review</option>
+      <option>Custom</option>
+    </select>
+    <input id="d-label" style="margin-top:8px;" placeholder="Or type your own">
+    <label for="d-date">When</label>
+    <input id="d-date" type="date">
+    <button class="btn block" style="margin-top:18px;" onclick="saveDate()">Save date</button>
+  </div>
+</div>
+
+<div class="img-view" id="img-view" onclick="this.classList.remove('open')"><img id="img-view-img" alt="Receipt"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- storage (in-memory fallback for restricted previews) ---------- */
+var memStore = {};
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return memStore[k]||null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ memStore[k]=v; } }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){ delete memStore[k]; } }
+
+var state = { properties: [] };
+function load(){ var raw = lsGet('tidyrent'); if(raw){ try{ state = JSON.parse(raw); }catch(e){} } }
+function save(){
+  try{ localStorage.setItem('tidyrent', JSON.stringify(state)); }
+  catch(e){
+    if(e && (e.name==='QuotaExceededError' || String(e).indexOf('uota')>-1)){
+      toast('Device storage full — delete an old receipt photo or download a backup.');
+    } else { memStore['tidyrent']=JSON.stringify(state); }
+  }
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function money(n){ return '$' + Number(n||0).toLocaleString('en-AU',{maximumFractionDigits:0}); }
+function fmtD(iso){ var d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-AU',{day:'2-digit',month:'short'}); }
+function fmtDY(iso){ var d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'2-digit'}); }
+function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function daysBetween(a,b){ return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000); }
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._x); t._x=setTimeout(function(){t.classList.remove('show');},2400); }
+function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+var currentPropId = null;
+var ledgerLimit = 12;
+var editingEntryId = null;
+var entryType = 'expense';
+var pendingPhoto = null;
+var keepPhoto = null;
+
+/* ---------- navigation ---------- */
+function showScreen(name){
+  ['home','prop','dates','report'].forEach(function(s){
+    var el=document.getElementById('scr-'+s); if(el) el.classList.toggle('active', s===name);
+  });
+  ['home','dates','report'].forEach(function(s){
+    var b=document.getElementById('nav-'+s); if(b) b.classList.toggle('active', s===name || (name==='prop'&&s==='home'));
+  });
+  if(name==='home') renderHome();
+  if(name==='dates') renderAllDates();
+  if(name==='report'){ buildFYOptions(); renderReport(); renderStorage(); }
+  window.scrollTo(0,0);
+}
+
+/* ---------- rent status ---------- */
+function rentInfo(p){
+  if(!p.rent || !p.rent.nextDue) return null;
+  var diff = daysBetween(todayISO(), p.rent.nextDue);
+  if(diff > 0) return {cls:'ok', txt:'Rent due ' + fmtD(p.rent.nextDue), late:false, days:diff};
+  if(diff === 0) return {cls:'due', txt:'Rent due today', late:false, days:0};
+  return {cls:'late', txt:Math.abs(diff) + (Math.abs(diff)===1?' day':' days') + ' late', late:true, days:diff};
+}
+
+/* ---------- home ---------- */
+function renderHome(){
+  var list = document.getElementById('home-list');
+  var empty = document.getElementById('home-empty');
+  var addBtn = document.getElementById('add-prop-btn');
+  list.innerHTML = '';
+  if(state.properties.length === 0){ empty.style.display='block'; addBtn.style.display='none'; return; }
+  empty.style.display='none'; addBtn.style.display='block';
+  state.properties.forEach(function(p){
+    var ri = rentInfo(p);
+    var nextDate = (p.dates||[]).concat(p.tenant&&p.tenant.leaseEnd?[{label:'Lease ends',date:p.tenant.leaseEnd}]:[])
+      .filter(function(d){return d.date>=todayISO();})
+      .sort(function(a,b){return a.date.localeCompare(b.date);})[0];
+    var card = document.createElement('div');
+    card.className='card strong prop-card';
+    card.onclick=function(){ openProp(p.id); };
+    var chips = '';
+    if(ri) chips += '<span class="chip '+ri.cls+'">'+ri.txt+'</span>';
+    if(nextDate) chips += '<span class="chip date">'+esc(nextDate.label)+' '+fmtD(nextDate.date)+'</span>';
+    var fy = fyTotals(currentFY(), p.id);
+    card.innerHTML = '<h3>'+esc(p.name)+'</h3>'+
+      '<div class="meta">FY to date: <b>'+money(fy.inn)+' in · '+money(fy.out)+' out</b>'+(p.tenant&&p.tenant.name?' · '+esc(p.tenant.name):'')+'</div>'+
+      '<div class="chips">'+chips+'</div>';
+    list.appendChild(card);
+  });
+}
+
+/* ---------- property detail ---------- */
+function openProp(id){ currentPropId=id; ledgerLimit=12; renderProp(); showScreen('prop'); }
+function getProp(){ return state.properties.find(function(p){return p.id===currentPropId;}); }
+function renderProp(){
+  var p = getProp(); if(!p){ showScreen('home'); return; }
+  document.getElementById('p-name').textContent = p.name;
+  var freqTxt = {7:'weekly',14:'fortnightly',30:'monthly'}[p.rent.freq]||'';
+  document.getElementById('p-sub').textContent = money(p.rent.amount)+' '+freqTxt;
+  var ri = rentInfo(p);
+  var rs = document.getElementById('rent-status');
+  rs.className = 'rent-status' + (ri && ri.late ? ' late':'');
+  rs.innerHTML = ri
+    ? '<div><div class="big">'+(ri.late?'⚠ '+ri.txt:ri.txt)+'</div><div class="sub">'+money(p.rent.amount)+' expected</div></div>'
+    : '<div class="sub">Set a rent amount and due date via Edit.</div>';
+
+  /* ledger */
+  var entries = (p.entries||[]).slice().sort(function(a,b){ return b.date.localeCompare(a.date) || (b.id>a.id?1:-1); });
+  var lg = document.getElementById('ledger');
+  var html = '<div class="ledger-head"><span>'+esc(p.name)+'</span><span class="dot">● tracking</span></div>';
+  if(entries.length===0){ html += '<div class="lrow" style="cursor:default;"><span class="t" style="color:var(--muted)">No entries yet — tap Rent received or add an expense.</span></div>'; }
+  entries.slice(0,ledgerLimit).forEach(function(en){
+    var isIn = en.type!=='expense';
+    html += '<div class="lrow'+(en.late?' late':'')+'" onclick="editEntry(\''+en.id+'\')">'
+      +'<span class="d">'+fmtD(en.date)+'</span>'
+      +'<span class="t">'+esc(en.note || (en.type==='rent'?'Rent received':en.type==='income'?'Income':'Expense'))
+      +(en.late?' <span class="chip late" style="font-size:0.58rem;">'+en.late+'d late</span>':'')+'</span>'
+      +(en.photo?'<img class="pic" src="'+en.photo+'" alt="Receipt" onclick="event.stopPropagation();viewImg(this.src)">':'')
+      +'<span class="a '+(isIn?'in':'')+'">'+(isIn?'':'−')+money(en.amount)+(en.type==='rent'?' ✓':'')+'</span>'
+      +'</div>';
+  });
+  if(entries.length>ledgerLimit){
+    html += '<button class="ledger-more" onclick="ledgerLimit+=20;renderProp();">Show older entries ('+(entries.length-ledgerLimit)+' more)</button>';
+  }
+  var fy = fyTotals(currentFY(), p.id);
+  html += '<div class="ledger-foot"><span>FY to date</span><span><b>'+money(fy.inn)+' in · '+money(fy.out)+' out</b></span></div>';
+  lg.innerHTML = html;
+
+  /* tenant */
+  var tb = document.getElementById('tenant-body');
+  var t = p.tenant||{};
+  if(!t.name && !t.phone && !t.leaseEnd && !t.bond){
+    tb.innerHTML = '<p class="hint" style="margin-top:8px;">Add your tenant, lease end and bond so it\'s all in one place.</p>';
+  } else {
+    var leaseTxt = t.leaseEnd ? fmtDY(t.leaseEnd) + (daysBetween(todayISO(),t.leaseEnd)>=0 ? ' ('+daysBetween(todayISO(),t.leaseEnd)+'d)' : ' (ended)') : '—';
+    tb.innerHTML = '<div class="tenant-grid">'
+      +'<div class="tg-item"><div class="k">Tenant</div><div class="v">'+esc(t.name||'—')+'</div></div>'
+      +'<div class="tg-item"><div class="k">Phone</div><div class="v">'+(t.phone?'<a href="tel:'+esc(t.phone)+'">'+esc(t.phone)+'</a>':'—')+'</div></div>'
+      +'<div class="tg-item"><div class="k">Lease ends</div><div class="v">'+leaseTxt+'</div></div>'
+      +'<div class="tg-item"><div class="k">Bond held</div><div class="v">'+(t.bond?money(t.bond):'—')+'</div></div>'
+      +'</div>';
+  }
+
+  /* dates */
+  var dl = document.getElementById('date-list');
+  var ds = (p.dates||[]).slice();
+  if(p.tenant && p.tenant.leaseEnd) ds.push({id:'__lease', label:'Lease ends', date:p.tenant.leaseEnd, lease:true});
+  ds.sort(function(a,b){return a.date.localeCompare(b.date);});
+  dl.innerHTML = ds.length===0 ? '<p class="hint" style="margin-top:8px;">No key dates yet.</p>' : '';
+  ds.forEach(function(d){
+    var diff = daysBetween(todayISO(), d.date);
+    var when = diff<0 ? Math.abs(diff)+'d overdue' : diff===0 ? 'Today' : 'in '+diff+'d — '+fmtDY(d.date);
+    var item = document.createElement('div');
+    item.className='date-item'+(diff<0?' overdue':'');
+    item.innerHTML='<div><div class="lbl">'+esc(d.label)+'</div><div class="whn">'+when+'</div></div>'
+      +(d.lease?'':'<button class="xdel" aria-label="Delete date" onclick="delDate(\''+d.id+'\')">✕</button>');
+    dl.appendChild(item);
+  });
+}
+function viewImg(src){ document.getElementById('img-view-img').src=src; document.getElementById('img-view').classList.add('open'); }
+
+/* ---------- rent logging ---------- */
+function openRentModal(){
+  var p=getProp(); if(!p||!p.rent.amount){ toast('Set rent details first (Edit)'); return; }
+  document.getElementById('r-amount').value = p.rent.amount;
+  document.getElementById('r-expected').textContent = 'Expected: '+money(p.rent.amount)+'. Change it for a partial payment.';
+  document.getElementById('r-date').value = todayISO();
+  document.getElementById('r-roll').checked = true;
+  openModal('m-rent');
+}
+function saveRent(){
+  var p=getProp(); if(!p) return;
+  var amount=parseFloat(document.getElementById('r-amount').value);
+  var date=document.getElementById('r-date').value;
+  var roll=document.getElementById('r-roll').checked;
+  if(!amount||!date){ toast('Amount and date needed'); return; }
+  var ri = rentInfo(p);
+  var late = ri && ri.late ? Math.abs(ri.days) : 0;
+  p.entries=p.entries||[];
+  p.entries.push({id:uid(), type:'rent', date:date, amount:amount, note:'Rent received', late:late||undefined});
+  if(roll && p.rent.nextDue){
+    var freq=Number(p.rent.freq);
+    var d=new Date(p.rent.nextDue+'T00:00:00');
+    if(freq===30){ d.setMonth(d.getMonth()+1); } else { d.setDate(d.getDate()+freq); }
+    p.rent.nextDue=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  save(); closeModal('m-rent'); renderProp(); toast('Rent logged ✓');
+}
+
+/* ---------- entries (expense / income / edit) ---------- */
+function setEntryType(t){
+  entryType=t;
+  document.getElementById('seg-exp').classList.toggle('on', t==='expense');
+  document.getElementById('seg-inc').classList.toggle('on', t==='income');
+  document.getElementById('e-cat-wrap').style.display = t==='expense'?'block':'none';
+  document.getElementById('e-typehint').textContent = t==='expense'?'e.g. repairs, rates, insurance':'e.g. water usage reimbursement, bond claim';
+  document.getElementById('e-desc').placeholder = t==='expense'?'Plumber — hot water service':'Water usage — tenant reimbursement';
+}
+function openEntryModal(){
+  editingEntryId=null; pendingPhoto=null; keepPhoto=null;
+  document.getElementById('m-entry-title').textContent='Add entry';
+  document.getElementById('e-typeseg').style.display='flex';
+  document.getElementById('e-delete').style.display='none';
+  setEntryType('expense');
+  document.getElementById('e-desc').value='';
+  document.getElementById('e-amount').value='';
+  document.getElementById('e-date').value=todayISO();
+  document.getElementById('e-photo').value='';
+  var pv=document.getElementById('e-preview'); pv.style.display='none'; pv.src='';
+  openModal('m-entry');
+}
+function editEntry(id){
+  var p=getProp(); if(!p) return;
+  var en=(p.entries||[]).find(function(e){return e.id===id;}); if(!en) return;
+  editingEntryId=id; pendingPhoto=null; keepPhoto=en.photo||null;
+  document.getElementById('m-entry-title').textContent = en.type==='rent'?'Edit rent entry':'Edit entry';
+  document.getElementById('e-typeseg').style.display = en.type==='rent'?'none':'flex';
+  setEntryType(en.type==='income'?'income':'expense');
+  if(en.type==='rent'){ entryType='rent'; document.getElementById('e-cat-wrap').style.display='none'; document.getElementById('e-typehint').textContent='Rent payment — edit amount, date or note.'; }
+  document.getElementById('e-desc').value=en.note||'';
+  document.getElementById('e-amount').value=en.amount;
+  if(en.type==='expense') document.getElementById('e-cat').value=en.cat||'Other';
+  document.getElementById('e-date').value=en.date;
+  document.getElementById('e-photo').value='';
+  var pv=document.getElementById('e-preview');
+  if(en.photo){ pv.src=en.photo; pv.style.display='block'; } else { pv.style.display='none'; pv.src=''; }
+  document.getElementById('e-delete').style.display='block';
+  openModal('m-entry');
+}
+function saveEntry(){
+  var p=getProp(); if(!p) return;
+  var desc=document.getElementById('e-desc').value.trim();
+  var amount=parseFloat(document.getElementById('e-amount').value);
+  var cat=document.getElementById('e-cat').value;
+  var date=document.getElementById('e-date').value;
+  if(!amount||!date){ toast('Amount and date needed'); return; }
+  p.entries=p.entries||[];
+  if(editingEntryId){
+    var en=p.entries.find(function(e){return e.id===editingEntryId;});
+    if(en){
+      en.date=date; en.amount=amount;
+      en.note=desc||en.note;
+      if(en.type!=='rent'){ en.type=entryType; en.cat=entryType==='expense'?cat:undefined; if(!desc) en.note=entryType==='expense'?cat:'Income'; }
+      en.photo = pendingPhoto || keepPhoto || undefined;
+    }
+  } else {
+    p.entries.push({
+      id:uid(), type:entryType, date:date, amount:amount,
+      note:desc || (entryType==='expense'?cat:'Income'),
+      cat:entryType==='expense'?cat:undefined,
+      photo:pendingPhoto||undefined
+    });
+  }
+  pendingPhoto=null; keepPhoto=null; editingEntryId=null;
+  save(); closeModal('m-entry'); renderProp(); toast('Saved ✓');
+}
+function deleteEditingEntry(){
+  var p=getProp(); if(!p||!editingEntryId) return;
+  if(!confirm('Delete this entry?')) return;
+  p.entries=p.entries.filter(function(e){return e.id!==editingEntryId;});
+  editingEntryId=null;
+  save(); closeModal('m-entry'); renderProp(); toast('Entry deleted');
+}
+function previewPhoto(ev){
+  var file = ev.target.files[0]; if(!file) return;
+  var img = new Image();
+  var reader = new FileReader();
+  reader.onload = function(e){
+    img.onload = function(){
+      var maxW = 800, scale = Math.min(1, maxW/img.width);
+      var c = document.createElement('canvas');
+      c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      pendingPhoto = c.toDataURL('image/jpeg',0.5);
+      var pv=document.getElementById('e-preview'); pv.src=pendingPhoto; pv.style.display='block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ---------- tenant ---------- */
+function openTenantModal(){
+  var p=getProp(); if(!p) return;
+  var t=p.tenant||{};
+  document.getElementById('t-name').value=t.name||'';
+  document.getElementById('t-phone').value=t.phone||'';
+  document.getElementById('t-lease-end').value=t.leaseEnd||'';
+  document.getElementById('t-bond').value=t.bond||'';
+  openModal('m-tenant');
+}
+function saveTenant(){
+  var p=getProp(); if(!p) return;
+  p.tenant={
+    name:document.getElementById('t-name').value.trim(),
+    phone:document.getElementById('t-phone').value.trim(),
+    leaseEnd:document.getElementById('t-lease-end').value||'',
+    bond:parseFloat(document.getElementById('t-bond').value)||0
+  };
+  save(); closeModal('m-tenant'); renderProp(); toast('Saved ✓');
+}
+
+/* ---------- property modal ---------- */
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openPropModal(editId){
+  var editing = !!editId;
+  document.getElementById('m-prop-title').textContent = editing?'Edit property':'Add property';
+  var p = editing ? state.properties.find(function(x){return x.id===editId;}) : null;
+  document.getElementById('f-name').value = p?p.name:'';
+  document.getElementById('f-amount').value = p?p.rent.amount:'';
+  document.getElementById('f-freq').value = p?String(p.rent.freq):'7';
+  document.getElementById('f-due').value = p?p.rent.nextDue:todayISO();
+  document.getElementById('m-prop').dataset.edit = editing?editId:'';
+  openModal('m-prop');
+}
+function saveProp(){
+  var name = document.getElementById('f-name').value.trim();
+  var amount = parseFloat(document.getElementById('f-amount').value);
+  var freq = Number(document.getElementById('f-freq').value);
+  var due = document.getElementById('f-due').value;
+  if(!name){ toast('Give it a name'); return; }
+  if(!amount || !due){ toast('Rent amount and due date needed'); return; }
+  var editId = document.getElementById('m-prop').dataset.edit;
+  if(editId){
+    var p = state.properties.find(function(x){return x.id===editId;});
+    p.name=name; p.rent={amount:amount,freq:freq,nextDue:due};
+  } else {
+    state.properties.push({id:uid(), name:name, rent:{amount:amount,freq:freq,nextDue:due}, entries:[], dates:[], tenant:{}});
+  }
+  save(); closeModal('m-prop');
+  if(editId && currentPropId===editId){ renderProp(); } else { renderHome(); }
+  toast('Saved ✓');
+}
+function deleteProp(){
+  var p=getProp(); if(!p) return;
+  if(!confirm('Delete "'+p.name+'" and all its records? This cannot be undone.')) return;
+  state.properties = state.properties.filter(function(x){return x.id!==currentPropId;});
+  save(); showScreen('home'); toast('Property deleted');
+}
+
+/* ---------- dates ---------- */
+function openDateModal(){
+  document.getElementById('d-label').value=document.getElementById('d-label-preset').value;
+  document.getElementById('d-date').value='';
+  openModal('m-date');
+}
+function saveDate(){
+  var p=getProp(); if(!p) return;
+  var label=document.getElementById('d-label').value.trim()||document.getElementById('d-label-preset').value;
+  var date=document.getElementById('d-date').value;
+  if(!date){ toast('Pick a date'); return; }
+  p.dates=p.dates||[];
+  p.dates.push({id:uid(), label:label, date:date});
+  save(); closeModal('m-date'); renderProp(); toast('Date saved ✓');
+}
+function delDate(id){
+  var p=getProp(); if(!p) return;
+  p.dates = (p.dates||[]).filter(function(d){return d.id!==id;});
+  save(); renderProp();
+}
+function renderAllDates(){
+  var box=document.getElementById('all-dates');
+  var all=[];
+  state.properties.forEach(function(p){
+    (p.dates||[]).forEach(function(d){ all.push({p:p.name, pid:p.id, label:d.label, date:d.date}); });
+    if(p.tenant && p.tenant.leaseEnd) all.push({p:p.name, pid:p.id, label:'Lease ends', date:p.tenant.leaseEnd});
+    var ri=rentInfo(p);
+    if(p.rent && p.rent.nextDue) all.push({p:p.name, pid:p.id, label:'Rent due'+(ri&&ri.late?' (late)':''), date:p.rent.nextDue});
+  });
+  all.sort(function(a,b){return a.date.localeCompare(b.date);});
+  if(all.length===0){ box.innerHTML='<p class="hint">Nothing scheduled. Add key dates from a property page.</p>'; return; }
+  box.innerHTML='';
+  all.forEach(function(d){
+    var diff=daysBetween(todayISO(), d.date);
+    var when=diff<0?Math.abs(diff)+'d overdue':diff===0?'Today':'in '+diff+'d — '+fmtDY(d.date);
+    var item=document.createElement('div');
+    item.className='date-item'+(diff<0?' overdue':'');
+    item.style.cursor='pointer';
+    item.onclick=function(){ openProp(d.pid); };
+    item.innerHTML='<div><div class="lbl">'+esc(d.label)+'</div><div class="whn">'+esc(d.p)+' · '+when+'</div></div><div>›</div>';
+    box.appendChild(item);
+  });
+}
+
+/* ---------- report ---------- */
+function currentFY(){
+  var now=new Date();
+  return (now.getMonth()>=6) ? now.getFullYear()+1 : now.getFullYear();
+}
+function fyRange(fyEnd){ return { from:(fyEnd-1)+'-07-01', to:fyEnd+'-06-30' }; }
+function fyTotals(fyEnd, propId){
+  var r=fyRange(fyEnd), inn=0, out=0;
+  state.properties.forEach(function(p){
+    if(propId && p.id!==propId) return;
+    (p.entries||[]).forEach(function(e){
+      if(e.date>=r.from && e.date<=r.to){ if(e.type==='expense') out+=e.amount; else inn+=e.amount; }
+    });
+  });
+  return {inn:inn,out:out};
+}
+function buildFYOptions(){
+  var sel=document.getElementById('fy-select');
+  var current = sel.value;
+  var years=new Set([currentFY()]);
+  state.properties.forEach(function(p){ (p.entries||[]).forEach(function(e){
+    var d=new Date(e.date+'T00:00:00'); years.add(d.getMonth()>=6?d.getFullYear()+1:d.getFullYear());
+  });});
+  var arr=Array.from(years).sort(function(a,b){return b-a;});
+  sel.innerHTML=arr.map(function(y){return '<option value="'+y+'">FY '+(y-1)+'–'+String(y).slice(2)+'</option>';}).join('');
+  if(current && arr.indexOf(Number(current))>-1) sel.value=current;
+}
+function renderReport(){
+  var fy=Number(document.getElementById('fy-select').value)||currentFY();
+  var t=fyTotals(fy);
+  document.getElementById('rep-in').textContent=money(t.inn);
+  document.getElementById('rep-out').textContent=money(t.out);
+  document.getElementById('rep-net').textContent=(t.inn-t.out<0?'−':'')+money(Math.abs(t.inn-t.out));
+  var cats={}, r=fyRange(fy);
+  state.properties.forEach(function(p){ (p.entries||[]).forEach(function(e){
+    if(e.type==='expense' && e.date>=r.from && e.date<=r.to){ cats[e.cat||'Other']=(cats[e.cat||'Other']||0)+e.amount; }
+  });});
+  var box=document.getElementById('rep-cats');
+  var keys=Object.keys(cats).sort(function(a,b){return cats[b]-cats[a];});
+  box.innerHTML=keys.length===0?'<p class="hint">No expenses recorded for this year yet.</p>':'';
+  keys.forEach(function(k){
+    var row=document.createElement('div'); row.className='cat-row';
+    row.innerHTML='<span>'+esc(k)+'</span><span class="a">−'+money(cats[k])+'</span>';
+    box.appendChild(row);
+  });
+}
+function renderStorage(){
+  var raw = lsGet('tidyrent')||'';
+  var used = new Blob([raw]).size;
+  var cap = 4.5*1024*1024; /* conservative localStorage estimate */
+  var pct = Math.min(100, Math.round(used/cap*100));
+  var el=document.getElementById('storage-meter');
+  el.innerHTML='<div class="meter'+(pct>80?' warn':'')+'"><div style="width:'+pct+'%"></div></div>'
+    +'<p class="hint">'+(used/1024).toFixed(0)+' KB used'+(pct>80?' — getting full. Receipt photos take the most space.':'')+'</p>';
+}
+function exportCSV(){
+  var fy=Number(document.getElementById('fy-select').value)||currentFY();
+  var r=fyRange(fy);
+  var rows=[['Property','Date','Type','Category','Description','Amount']];
+  state.properties.forEach(function(p){ (p.entries||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);}).forEach(function(e){
+    if(e.date>=r.from && e.date<=r.to){
+      rows.push([p.name, e.date, e.type==='expense'?'Expense':(e.type==='rent'?'Rent':'Other income'), e.cat||'', e.note||'', (e.type==='expense'?'-':'')+e.amount]);
+    }
+  });});
+  var csv=rows.map(function(row){ return row.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  downloadFile('tidyrent-FY'+(fy-1)+'-'+String(fy).slice(2)+'.csv', csv, 'text/csv');
+  toast('CSV downloaded');
+}
+function backupJSON(){
+  downloadFile('tidyrent-backup-'+todayISO()+'.json', JSON.stringify(state,null,1), 'application/json');
+  toast('Backup downloaded');
+}
+function restoreJSON(ev){
+  var file=ev.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      if(!data || !Array.isArray(data.properties)) throw new Error('bad');
+      state=data; save(); renderHome(); showScreen('home'); toast('Backup restored ✓');
+    }catch(err){ toast("That file isn't a TidyRent backup"); }
+  };
+  reader.readAsText(file);
+}
+function wipeAll(){
+  if(!confirm('Delete ALL properties and records from this device? This cannot be undone.')) return;
+  if(!confirm('Really sure? Consider downloading a backup first.')) return;
+  state={properties:[]}; lsDel('tidyrent'); renderHome(); showScreen('home'); toast('All data deleted');
+}
+function downloadFile(name, content, type){
+  var blob=new Blob([content],{type:type});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+}
+function joinList(){
+  window.open('mailto:hello@tidyrent.com.au?subject=Founding%20member&body=Count%20me%20in%20for%20%246%2Fmonth%20founding%20pricing.','_blank');
+}
+
+/* ---------- boot ---------- */
+load();
+renderHome();
+</script>
+</body>
+</html>

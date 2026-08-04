@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TidyRent — Simple rent tracking for everyday Australian landlords</title>
+<meta name="description" content="Rent tracking, expense capture and key-date reminders for landlords with one or two properties. No bloat, ready at tax time. Founding members lock in $6/month.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#21303F;
+    --paper:#F7F5EF;
+    --card:#FFFFFF;
+    --green:#2F7A57;
+    --green-dark:#22593F;
+    --stamp:#B33A3A;
+    --line:#D8D3C4;
+    --mark:#F2C94C;
+    --muted:#5D6B79;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *,*::before,*::after{animation:none!important;transition:none!important;}
+  }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Source Sans 3',system-ui,-apple-system,sans-serif;
+    font-size:17px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px;}
+
+  /* header */
+  header{padding:22px 0;}
+  .head-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .wordmark{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-0.02em;}
+  .wordmark span{color:var(--green);}
+  .head-tag{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;text-align:right;}
+
+  /* hero */
+  .hero{padding:34px 0 10px;}
+  .hero-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:44px;align-items:center;}
+  h1{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;
+    font-size:clamp(2rem,5.4vw,3.2rem);
+    line-height:1.08;
+    letter-spacing:-0.025em;
+  }
+  .mark{
+    background:linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%);
+    padding:0 2px;
+  }
+  .hero p.sub{margin-top:18px;font-size:1.08rem;color:var(--muted);max-width:44ch;}
+  .hero p.sub strong{color:var(--ink);}
+
+  /* signup form */
+  .signup{margin-top:26px;max-width:460px;}
+  .signup form{display:flex;gap:10px;}
+  .signup input[type=email]{
+    flex:1;min-width:0;
+    padding:14px 16px;
+    font:inherit;
+    border:1.5px solid var(--ink);
+    border-radius:8px;
+    background:var(--card);
+  }
+  .signup input[type=email]:focus{outline:3px solid var(--mark);outline-offset:1px;}
+  .btn{
+    padding:14px 22px;
+    font-family:'Source Sans 3',sans-serif;font-weight:600;font-size:1rem;
+    background:var(--green);color:#fff;
+    border:1.5px solid var(--green-dark);
+    border-radius:8px;cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn:hover{background:var(--green-dark);}
+  .btn:focus-visible{outline:3px solid var(--mark);outline-offset:2px;}
+  .form-note{margin-top:10px;font-size:0.85rem;color:var(--muted);}
+  .form-note b{color:var(--green-dark);}
+  .form-success{display:none;padding:16px 18px;background:var(--card);border:1.5px solid var(--green);border-radius:8px;font-weight:600;color:var(--green-dark);}
+  .hp{position:absolute;left:-9999px;opacity:0;height:0;width:0;overflow:hidden;}
+
+  /* passbook ledger card — the signature */
+  .ledger{
+    background:var(--card);
+    border:1.5px solid var(--ink);
+    border-radius:10px;
+    box-shadow:6px 6px 0 rgba(33,48,63,0.12);
+    overflow:hidden;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.82rem;
+  }
+  .ledger-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 16px;
+    background:var(--ink);color:var(--paper);
+    font-size:0.74rem;text-transform:uppercase;letter-spacing:0.08em;
+  }
+  .ledger-head .dot{color:var(--mark);}
+  .ledger table{width:100%;border-collapse:collapse;}
+  .ledger td{padding:11px 16px;border-top:1px dashed var(--line);vertical-align:middle;}
+  .ledger tr:first-child td{border-top:none;}
+  .amt{text-align:right;font-weight:500;}
+  .ok{color:var(--green);font-weight:500;}
+  .late-row{background:#FBF1EF;}
+  .stamp{
+    display:inline-block;
+    color:var(--stamp);
+    border:2px solid var(--stamp);
+    border-radius:4px;
+    padding:1px 7px;
+    font-weight:500;font-size:0.7rem;letter-spacing:0.1em;
+    transform:rotate(-4deg);
+  }
+  .ledger-foot{padding:11px 16px;border-top:1.5px solid var(--ink);display:flex;justify-content:space-between;font-size:0.74rem;color:var(--muted);}
+  .ledger-foot b{color:var(--ink);}
+
+  /* pain strip */
+  .pain{margin:58px 0 0;padding:30px 0;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);}
+  .pain p{
+    font-family:'Bricolage Grotesque',sans-serif;font-weight:600;
+    font-size:clamp(1.15rem,2.6vw,1.5rem);
+    max-width:34ch;line-height:1.3;letter-spacing:-0.01em;
+  }
+  .pain p span{color:var(--muted);font-weight:400;}
+
+  /* features */
+  .features{padding:56px 0 8px;}
+  .feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:34px;}
+  .feat h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:1.15rem;letter-spacing:-0.01em;margin-bottom:8px;}
+  .feat .kicker{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--green);display:block;margin-bottom:10px;}
+  .feat p{color:var(--muted);font-size:0.98rem;}
+
+  /* founder note */
+  .note{padding:48px 0;}
+  .note-card{
+    background:var(--card);border:1.5px solid var(--line);border-radius:10px;
+    padding:28px 30px;max-width:640px;
+  }
+  .note-card p{font-size:1.02rem;}
+  .note-card p + p{margin-top:12px;}
+  .note-card .sig{font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--muted);margin-top:16px;}
+
+  /* pricing + second cta */
+  .cta2{padding:14px 0 60px;}
+  .cta2-inner{
+    background:var(--ink);color:var(--paper);
+    border-radius:12px;padding:40px 34px;
+    display:grid;grid-template-columns:1.1fr 0.9fr;gap:32px;align-items:center;
+  }
+  .cta2 h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(1.5rem,3.4vw,2.1rem);letter-spacing:-0.02em;line-height:1.15;}
+  .cta2 .price-line{margin-top:14px;font-size:1rem;color:#B9C2CC;}
+  .cta2 .price-line b{color:var(--mark);}
+  .cta2 form{display:flex;gap:10px;}
+  .cta2 input[type=email]{flex:1;min-width:0;padding:14px 16px;font:inherit;border:1.5px solid var(--paper);border-radius:8px;background:#fff;color:var(--ink);}
+  .cta2 .form-note{color:#B9C2CC;}
+
+  /* faq */
+  .faq{padding:0 0 64px;}
+  .faq h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:1.3rem;margin-bottom:20px;letter-spacing:-0.01em;}
+  .faq dl{max-width:640px;}
+  .faq dt{font-weight:600;margin-top:18px;}
+  .faq dd{color:var(--muted);margin-top:5px;}
+
+  footer{padding:24px 0 40px;border-top:1px solid var(--line);font-size:0.85rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+
+  @media (max-width:820px){
+    .hero-grid{grid-template-columns:1fr;gap:34px;}
+    .feat-grid{grid-template-columns:1fr;gap:28px;}
+    .cta2-inner{grid-template-columns:1fr;padding:30px 22px;}
+  }
+  @media (max-width:520px){
+    .signup form, .cta2 form{flex-direction:column;}
+    .btn{width:100%;}
+    .head-tag{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="head-row">
+    <div class="wordmark">Tidy<span>Rent</span></div>
+    <div class="head-tag">Made for Australian landlords</div>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <h1>Rent tracking for landlords with one property. Not one hundred.</h1>
+        <p class="sub">No account. No signup. Nothing uploaded — your records live <strong><span class="mark">on your phone only</span></strong>. Track rent, keep every receipt, and be ready at tax time.</p>
+
+        <div class="signup" style="margin-top:22px;">
+          <a class="btn" href="/app/" style="text-decoration:none;display:block;text-align:center;">Open TidyRent — free, no signup</a>
+          <p class="form-note" style="margin-bottom:18px;">Works offline. Add it to your home screen and it's an app.</p>
+        </div>
+
+        <div class="signup" style="margin-top:6px;">
+          <form name="early-access" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="return sendForm(event)">
+            <input type="hidden" name="form-name" value="early-access">
+            <p class="hp"><label>Don't fill this out: <input name="bot-field"></label></p>
+            <input type="email" name="email" required placeholder="you@email.com" aria-label="Email address">
+            <button class="btn" type="submit">Get early access</button>
+          </form>
+          <div class="form-success" role="status">You're on the list. We'll be in touch soon.</div>
+          <p class="form-note"><b>First 100 founding members: $6/month, locked forever.</b> No spam, no card required.</p>
+        </div>
+      </div>
+
+      <div class="ledger" aria-label="Example rent ledger">
+        <div class="ledger-head"><span>12 Acacia St — Unit 2</span><span class="dot">● tracking</span></div>
+        <table>
+          <tr><td>06 Jul</td><td>Rent received</td><td class="amt ok">$620 ✓</td></tr>
+          <tr><td>29 Jun</td><td>Plumber — hot water</td><td class="amt">−$285</td></tr>
+          <tr class="late-row"><td>22 Jun</td><td><span class="stamp">3 DAYS LATE</span></td><td class="amt">$620</td></tr>
+          <tr><td>15 Jun</td><td>Rent received</td><td class="amt ok">$620 ✓</td></tr>
+          <tr><td>12 Jun</td><td>Landlord insurance</td><td class="amt">−$41</td></tr>
+        </table>
+        <div class="ledger-foot"><span>FY to date</span><span><b>$14,880 in · $2,140 out</b></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pain">
+    <div class="wrap">
+      <p>"Something simple and cheap. Not bloated with a million features I'll never use." <span>— every small landlord, in every forum, for years.</span></p>
+    </div>
+  </section>
+
+  <section class="features wrap">
+    <div class="feat-grid">
+      <div class="feat">
+        <span class="kicker">Rent</span>
+        <h3>Know it's landed</h3>
+        <p>Log the rent in two taps — or connect your statement later. Late payments get flagged the day they slip, not at the end of the quarter.</p>
+      </div>
+      <div class="feat">
+        <span class="kicker">Expenses</span>
+        <h3>Every receipt kept</h3>
+        <p>Snap the plumber's invoice and it's filed. At EOFY, download one clean report your accountant will actually thank you for.</p>
+      </div>
+      <div class="feat">
+        <span class="kicker">Dates</span>
+        <h3>Nothing sneaks up</h3>
+        <p>Lease renewals, inspections, insurance, smoke alarm checks — see everything coming before the deadline does, not after.</p>
+      </div>
+      <div class="feat">
+        <span class="kicker">Private</span>
+        <h3>No account. Ever.</h3>
+        <p>Your rent records never touch our servers, because we don't have any. No password, no data breach risk, no company between you and your ledger.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="note wrap">
+    <div class="note-card">
+      <p>I work in property. I've watched everyday investors get sold software built for professional managers — dashboards, portals, trust accounting — when all they wanted was a tidy ledger and a nudge when rent's late.</p>
+      <p>TidyRent is that. One job, done properly, at a price that makes sense for one or two properties.</p>
+      <p class="sig">— The TidyRent team, Newcastle NSW</p>
+    </div>
+  </section>
+
+  <section class="cta2 wrap">
+    <div class="cta2-inner">
+      <div>
+        <h2>Founding members lock in $6/month. Forever.</h2>
+        <p class="price-line">Regular price will be <b>$12/month</b> at launch. First 100 on the list keep half price for life — and get a say in what we build first.</p>
+      </div>
+      <div>
+        <form name="early-access" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="return sendForm(event)">
+          <input type="hidden" name="form-name" value="early-access">
+          <p class="hp"><label>Don't fill this out: <input name="bot-field"></label></p>
+          <input type="email" name="email" required placeholder="you@email.com" aria-label="Email address">
+          <button class="btn" type="submit">Join the list</button>
+        </form>
+        <div class="form-success" role="status">You're on the list. We'll be in touch soon.</div>
+        <p class="form-note">Launching soon. Cancel anytime, export everything.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq wrap">
+    <h2>Fair questions</h2>
+    <dl>
+      <dt>When does it launch?</dt>
+      <dd>We're building now. Founding members get first access and set the roadmap.</dd>
+      <dt>Is my data mine?</dt>
+      <dd>Completely. Export everything to a spreadsheet any time, and delete your account with one click.</dd>
+      <dt>What if I have three or four properties?</dt>
+      <dd>Still works, same price. TidyRent is for anyone who doesn't need agency-grade software.</dd>
+      <dt>Do I need a real estate agent to use it?</dt>
+      <dd>No — it's built for self-managing landlords, but it plays nicely if an agent collects your rent too.</dd>
+    </dl>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span>© 2026 TidyRent · Newcastle, NSW</span>
+  <span>hello@tidyrent.com.au</span>
+</footer>
+
+<script>
+function sendForm(e){
+  e.preventDefault();
+  var form = e.target;
+  var data = new FormData(form);
+  fetch("/", {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams(data).toString()
+  }).then(function(){
+    form.style.display = "none";
+    var s = form.parentElement.querySelector(".form-success");
+    if(s){ s.style.display = "block"; }
+  }).catch(function(){
+    form.submit(); // fallback to standard post
+  });
+  return false;
+}
+</script>
+
+</body>
+</html>
